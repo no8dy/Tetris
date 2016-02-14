@@ -7,6 +7,9 @@
 #include<strings.h>
 #include<math.h>
 #include<pthread.h>
+#include<signal.h>
+//prevent from ctrl C
+void escape(int a);
 //function for curses
 void initial(void);
 //funcrion for socket
@@ -35,7 +38,8 @@ int localine=0;
 int x,y;
 int new=1;
 //start main program
-int main(){
+int main(void){
+	signal(SIGINT,escape);
 	int i;
 	// input name
 	printf("Input your name:");
@@ -111,6 +115,8 @@ int main(){
 	for(i=0;i<COLS-1;i++) // draw region of box and line
 		mvwaddch(win[1],0,i,'-');
 
+	mvwaddstr(win[1],0,0,myname);
+
 	char string[(LINES-1)*COLS];
 	char stringout[(LINES-1)*COLS];//use sprintf(string,":%s",string); bug
 
@@ -118,7 +124,7 @@ int main(){
 		string[i]='\0';
 	}
 	
-	refresh();
+//	refresh();
 	wmove(curwin,1,0);
 	mvwaddstr(curwin,1,0,"enter to insert");
 	wrefresh(win[1]);
@@ -211,6 +217,7 @@ int main(){
 				for(i=0;i<COLS-1;i++) // draw region of box and line
 					mvwaddch(win[1],0,i,'-');
 				
+				mvwaddstr(win[1],0,0,myname);
 				mvwaddstr(curwin,1,0,"enter to insert");
 				wrefresh(win[0]);
 				touchwin(win[1]);
@@ -221,8 +228,7 @@ int main(){
 			case 263://	backspace	
                 break;
 			case 27:
-				endwin();
-				exit(0);
+				escape(0);
 				break;
 			default:
 			break;
@@ -230,11 +236,6 @@ int main(){
 		wmove(win[1],y,x);
 		wrefresh(win[1]);//for wmove ,must use refresh
 	}
-
-	// close(server&client)
-	close(sockfd);
-	close(sockfd_old);
-
 	return 0;
 
 }
@@ -247,8 +248,8 @@ void recemsg(void){
 
 	while(1){
 		len = read(sockfd, buffer0, sizeof(buffer0), 0);
-		if(len==-1){//retire
-			puts("connection break");
+		if(len==0){//retire
+			escape(0);
 			break;
 		}
 		else if(len>=1){
@@ -283,7 +284,8 @@ void recemsg(void){
 				}
 				for(i=0;i<COLS-1;i++) // draw region of box and line
 					mvwaddch(win[1],0,i,'-');
-				
+			
+				mvwaddstr(win[1],0,0,myname);
 				wmove(win[1],inserty,insertx);				
 				wrefresh(win[0]);
 				touchwin(win[1]);
@@ -291,10 +293,7 @@ void recemsg(void){
 			}	
 		}
 	}
-	// Close connection
-	close(sockfd);
-	close(sockfd_old);
-	exit(0);
+	return;
 }
 
 int climission(void){
@@ -302,7 +301,7 @@ int climission(void){
 	struct sockaddr_in dest0;
 
 	// input IP
-	printf("Input IP(local:127.0.0.1):\n");
+	printf("Input IP(local:127.0.0.1 Enter to default):\n");
 	fgets(IP,sizeof(IP),stdin);
 	if(IP[0]=='\n');
 	sprintf(IP,"127.0.0.1");
@@ -362,7 +361,7 @@ void sermission(void){
 	struct sockaddr_in client_addr;
 	int addrlen=sizeof(client_addr);
 
-	// Wait and Accept connection
+	/* Wait and Accept connection */
 	sockfd = accept(sockfd_old, (struct sockaddr*)&client_addr, &addrlen);
 	puts("already connected");
 
@@ -377,4 +376,11 @@ void initial(void){
 	keypad(stdscr,TRUE);
 	refresh();
 	return;
+}
+void escape(int a){
+	endwin();
+	puts("connection break");
+	close(sockfd);
+	close(sockfd_old);
+	exit(0);
 }
