@@ -7,10 +7,10 @@
 #include<string.h>
 #include<strings.h>
 #include<math.h>
-#include<pthread.h>
+#include<pthread.h> //change name
 //funcrion
 void create_recv_thread(int order);
-void cancel_recv_thread(int order);
+int cancel_recv_thread(int order);
 void command_thread(void);
 void recemsg(void *num);
 //void recemsg(void);
@@ -23,15 +23,17 @@ int writeto(char *sender,char *receiver,char *string);
 //dimentation for socket
 struct clientinfo {
 	pthread_t id;//dimentation for thread
+	int root;
 	int fd;
 	char name[20];
+	char curname[20];
 };
 
 pthread_t id;
 pthread_t commandid; 
-
+pthread_t shutdownid;
 struct clientinfo client[CLIENTNUM]={
-	[0 ... CLIENTNUM-1]={ .fd=-1}
+	[0 ... CLIENTNUM-1]={ .fd=-1, .root=0}
 };
 
 char myname[60];
@@ -47,7 +49,7 @@ int main(void){
 		client[i].fd=-1;
 	}
 	// input name
-	printf("Input root name:");
+	printf("Set root pw:");
 	fgets(myname,sizeof(myname),stdin);
 	for(i=0;i<sizeof(myname);i++){
 	if(myname[i]=='\n'){
@@ -122,22 +124,23 @@ int main(void){
 	return 0;
 }
 
-void cancel_recv_thread(int order){
+int cancel_recv_thread(int order){
 	int ret;
 	if(!pthread_cancel(client[order].id)){
-		printf("cancel %s OK\n",client[order].name);
+		printf("cancel %s OK",client[order].name);
 		online--;//kill by server
 	}
 	else{
-		printf("cancel pthread error!\n");
-		return;
+		printf("cancel pthread error!");
+		return -1;
 	}
 	close(client[order].fd);	
 	client[order].fd=-1;
 	memberctrl("remove",client[order].name);
 //	printf("remove %s 139",client[order].name);
+	client[order].curname[0]='\0';
 	client[order].name[0]='\0';//after remove!!
-	return;
+	return 0;
 }
 void wall(char *sender,char *string){
 	char output[307];
@@ -183,7 +186,7 @@ void memberctrl(char *mod,char *name){
 			if(strcmp(name,client[i].name)==0){
 				for(j=0;j<CLIENTNUM;j++){
 					if((client[j].fd!=-1)&&(i!=j)){
-						sprintf(output,"add %s",client[j].name);
+						sprintf(output,"add %s",client[j].curname);
 						send(client[i].fd,output,sizeof(output),0);
 						sleep(1);//too fast
 					}
@@ -213,9 +216,14 @@ void kill(char *man){
 	int i;
 	for(i=0;i<CLIENTNUM;i++){
 		if(strcmp(man,client[i].name)==0){
-			printf("%s is killed ,",client[i].name);
-			cancel_recv_thread(i);
-			return;
+			if(cancel_recv_thread(i)==0){
+				printf("%s is killed\n",client[i].name);
+				return;
+			}
+			else{
+				printf("%s isn't killed\n",client[i].name);
+				return;
+			}
 		}
 	}
 	printf("there is no client named %s\n",man);
@@ -223,6 +231,12 @@ void kill(char *man){
 }
 void close_server(void){
 	int i;
+	wall("root","server will close after 5 seconds");
+	printf("will quit after 5 seconds\n5\n");
+	for(i=4;i>=0;i--){
+		sleep(1);
+		printf("%d\n",i);
+	}
 	for(i=0;i<CLIENTNUM;i++){
 		if(client[i].fd!=-1){
 			kill(client[i].name);
@@ -236,6 +250,7 @@ void recemsg(void *num){
 	char command[10];
 	char man[20];
 	char string[320]={'\0'};
+	char output[30];
 	int endsub=0;
 	int order=*((int*)num);
 	int len;
@@ -255,7 +270,7 @@ void recemsg(void *num){
 			if(strcmp(command,"wall")==0){
 				printf("recv wall msg from %s\n",client[order].name);	
 				sscanf(buffer0,"%*s %[^\n]",string);
-				wall(client[order].name,string);
+				wall(client[order].curname,string);
 			}
 			else if(strcmp(command,"write")==0){
 				printf("recv write msg from %s\n",client[order].name);
@@ -264,28 +279,89 @@ void recemsg(void *num){
 					printf("%s:%s\n",client[order].name,string);
 				}
 				else{
-					writeto(client[order].name,man,string);
+					writeto(client[order].curname,man,string);
 				}
+			}
+			else if(strcmp(command,"pw")==0){
+				printf("%s is trying to login as root\n",client[order].name);
+				sscanf(buffer0,"%*s %[^\n]",string);
+				if(strcmp(string,myname)==0){
+					send(client[order].fd,"pw accept",sizeof("pw accept"),0);
+					printf("%s login successfully\n",client[order].name);
+				}
+				else{
+					send(client[order].fd,"pw refuse",sizeof("pw refuse"),0);
+					printf("%s login failed\n",client[order].name);
+				}
+			}
+			else if(strcmp(command,"change")==0){
+				sscanf(buffer0,"%*s %[^\n]",man);
+				if(strcmp(man,"root")==0){
+					strcpy(client[order].curname,"root");
+				}
+				else{
+					strcpy(client[order].curname,client[order].name);
+				}
+			}
+			else if(strcmp(command,"hide")==0){
+				sprintf(output,"remove %s",client[order].name);
+				for(i=0;i<CLIENTNUM;i++){
+					if(client[i].fd!=-1 && strcmp(client[i].name,client[order].name)!=0){
+						send(client[i].fd,output, sizeof(output),0);
+						printf("hide %s to %s\n",client[order].name,client[i].name);
+					}
+				}
+			}
+			else if(strcmp(command,"unhide")==0){
+				sprintf(output,"add %s",client[order].name);
+				for(i=0;i<CLIENTNUM;i++){
+					if(client[i].fd!=-1 && strcmp(client[i].name,client[order].name)!=0){
+						send(client[i].fd,output, sizeof(output),0);
+						printf("unhide %s to %s\n",client[order].name,client[i].name);
+					}
+				}
+			}
+			else if(strcmp(command,"hideroot")==0){
+				sprintf(output,"remove root");
+				for(i=0;i<CLIENTNUM;i++){
+					if(client[i].fd!=-1){
+						send(client[i].fd,output, sizeof(output),0);
+						printf("hide root to %s\n",client[i].name);
+					}
+				}
+			}
+			else if(strcmp(command,"unhideroot")==0){
+				sprintf(output,"add root");
+				for(i=0;i<CLIENTNUM;i++){
+					if(client[i].fd!=-1){
+						send(client[i].fd,output, sizeof(output),0);
+						printf("unhide root to %s\n",client[i].name);
+					}
+				}
+			}
+			else if(strcmp(command,"")==0){
+
 			}
 			else if(strcmp(command,"kill")==0){
 				printf("recv kill msg from %s\n",client[order].name);
 				sscanf(buffer0,"%*s %s",man);
 				kill(man);
 			}
-			else if(strcmp(command,"shutdwon")==0){
-				close_server();
+			else if(strcmp(command,"shutdown")==0){
+				printf("%s shutdown server",client[order].name);
+				pthread_create(&shutdownid,NULL,(void *)close_server,NULL);
 			}
 			else if(strcmp(command,"name")==0){
-				if(sscanf(buffer0,"%*s %[^\n]",client[order].name)!=1){
+				if(sscanf(buffer0,"%*s %[^\n]",client[order].curname)!=1){
 					send(client[order].fd,"sys No Name? Bazinga",sizeof("sys No Name? Bazinga"),0);
 					break;
 				}
-				if(strcmp(client[order].name,"root")==0){
+				if(strcmp(client[order].curname,"root")==0){
 					send(client[order].fd,"sys Name can't be \"root\"",sizeof("sys Name can't be \"root\""),0);
 					break;
 				}
 				for(i=0;i<CLIENTNUM;i++){
-					if((i!=order)&&client[i].fd!=-1&&(strcmp(client[order].name,client[i].name)==0)){
+					if((i!=order)&&client[i].fd!=-1&&(strcmp(client[order].curname,client[i].name)==0)){
 						send(client[order].fd,"sys Name has been used",sizeof("sys Name has been used"),0);
 						endsub=1;
 						break;
@@ -294,7 +370,8 @@ void recemsg(void *num){
 				if(endsub==1){
 					break;
 				}
-				printf("client[%d] %s fd=%d has already connected\n",order,client[order].name,client[order].fd);
+				printf("client[%d] %s fd=%d has already connected\n",order,client[order].curname,client[order].fd);
+				strcpy(client[order].name,client[order].curname);
 				memberctrl("add",client[order].name);
 				memberctrl("all",client[order].name);
 			}
@@ -309,7 +386,8 @@ void recemsg(void *num){
 	close(client[order].fd);
 	client[order].fd=-1;
 	memberctrl("remove",client[order].name);
-	client[order].name[0]='\0';//be careful it should after remove
+	client[order].curname[0]='\0';//be careful it should after remove
+	client[order].name[0]='\0';	
 	pthread_exit(0);
 	return;
 }
@@ -337,6 +415,9 @@ void command_thread(void){
 			sscanf(command,"%*s %[^\n]",who);
 			kill(who);
 		}
+		else if(strcmp(what,"pw")==0){
+			printf("pw=%s\n",myname);
+		}
 		else if(strcmp(what,"port")==0){
 			printf("port=%d\n",PORT);
 		}
@@ -355,12 +436,6 @@ void command_thread(void){
 			}
 		}
 		else if(strcmp(what,"quit")==0){
-			wall("root","server will close after 5 seconds");
-			printf("will quit after 5 seconds\n5\n");
-			for(i=4;i>=0;i--){
-				sleep(1);
-				printf("%d\n",i);
-			}
 			close_server();
 			break;
 		}
