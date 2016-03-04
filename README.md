@@ -1,2 +1,2 @@
-# pixnet
-for pixnet blog
+# Tetris
+game on linux terminal
