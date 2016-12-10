@@ -33,13 +33,12 @@ int changenum=0;//we can just hold once for every block
 int lines=0;//score
 int speed=40;//well ,speed
 
-int main(void)
-{
+int main(void){
 	struct itimerval tick;
 	tick.it_value.tv_sec=1;
 	tick.it_value.tv_usec=0;
-	tick.it_interval.tv_sec=0;//
-	tick.it_interval.tv_usec=25000;//
+	tick.it_interval.tv_sec=0;
+	tick.it_interval.tv_usec=25000;
 
 	int pass=0;	
 	int sh;
@@ -1115,7 +1114,7 @@ void shade(int bot){
 	int k;
 	int dokx;
 	int doky;
-	static sx1,sx2,sx3,sx4,sy1,sy2,sy3,sy4;
+	static int sx1,sx2,sx3,sx4,sy1,sy2,sy3,sy4;
 	dokx=dotx;
 	doky=doty;
 	if(bot==3){
@@ -1521,9 +1520,9 @@ int ch;
 						}
 					}
 				break;
-				case 27: 
-					endwin();            /* 判斷是否[ESC]鍵被按下 */
-					exit(1);             /* 結束 curses 模式 */			
+				case 27: //ESC
+					endwin();
+					exit(1);
 				case 122:
 					change();
 				break;
