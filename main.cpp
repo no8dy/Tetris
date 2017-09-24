@@ -26,7 +26,7 @@ int stopfalling=0;//control block whether falling
 int block[25][11]={0};//game screen
 int bx1,bx2,bx3,bx4,by1,by2,by3,by4,dotx,doty;//blocks' position and reference dot for spin
 char shape;//block's shape
-int shmod;//tell spin(void) how to spin 
+int shmod;//tell spin(void) how to spin
 int ban=0;//ban spin infinitly
 int shadebot=1;//whether pirnt shade
 int changenum=0;//we can just hold once for every block
@@ -40,7 +40,7 @@ int main(void){
 	tick.it_interval.tv_sec=0;
 	tick.it_interval.tv_usec=25000;
 
-	int pass=0;	
+	int pass=0;
 	int sh;
 	int i=0;
 	int j=0;
@@ -54,17 +54,17 @@ int main(void){
 	noecho();
 	intrflush(stdscr,FALSE);
 	keypad(stdscr,TRUE);
-	reset(0); 	
+	reset(0);
 	move(x,y);
-	while(1){                  
+	while(1){
 		curs_set(0);//here i make some change to hide pointer
-		reset(0);	
-		mvprintw(12,n-5,"Enter to strat new game");	  
+		reset(0);
+		mvprintw(12,n-5,"Enter to strat new game");
 		sh=getch();   //enter to start game
 		switch(sh){
-			case '\r':	
+			case '\r':
 				reset(0);//remove Enter to strat new game
-				mvprintw(8,1,"holding:");						
+				mvprintw(8,1,"holding:");
 				mvprintw(10,17+n,"press Z to hold");
 				mvprintw(12,17+n,"press R to restart");
 				mvprintw(14,17+n,"press S to hide/show shadow");
@@ -81,9 +81,9 @@ int main(void){
 			break;
 			case 27:
 				endwin();
-				exit(1);
+				exit(0);
 			break;
-			}			
+			}
 	}
 }
 
@@ -109,7 +109,7 @@ void reset(int a){
 			block[i][j]=0;
 		}
 	}
-	 ban=0; 
+	 ban=0;
 	 if(a==1){
 	shape='N';
 	change();
@@ -126,7 +126,7 @@ int setblock(char type){
 		num=rand()%7;
 		switch(num){
 		case 0:
-			type='O';	
+			type='O';
 			break;
 		case 1:
 			type='I';
@@ -147,7 +147,7 @@ int setblock(char type){
 			type='T';
 			break;
 		}
-	}			
+	}
 	shmod=1;
 	doty=2;
 	dotx=4;
@@ -172,7 +172,7 @@ int setblock(char type){
 			bx3=5;
 			bx4=6;
 			break;
-		case 'I'://I	
+		case 'I'://I
 			shape='I';
 			if((block[3][4]==1)||(block[3][5]==1)||(block[3][6]==1)||(block[3][7]==1)){
 			return 1;
@@ -301,11 +301,11 @@ int setblock(char type){
 	ban=0;
 	return 0;
 }
-		
+
 int moveblock(int direct){
 	if(direct==1){//
 		if((bx1>1)&&(bx2>1)&&(bx3>1)&&(bx4>1)){
-			
+
 			if((!((bx1==bx2+1)&&(by1==by2)))&&(!((bx1==bx3+1)&&(by1==by3)))&&(!((bx1==bx4+1)&&(by1==by4)))&&(block[by1][bx1-1]==1)){
 				return 0;
 			}
@@ -318,7 +318,7 @@ int moveblock(int direct){
 			if((!((bx4==bx1+1)&&(by4==by1)))&&(!((bx4==bx2+1)&&(by4==by2)))&&(!((bx4==bx3+1)&&(by4==by3)))&&(block[by4][bx4-1]==1)){
 				return 0;
 			}
-			dotx--;				
+			dotx--;
 			removeblock();
 			bx1--;
 			bx2--;
@@ -331,7 +331,7 @@ int moveblock(int direct){
 	}
 	if(direct==2){
 		if((by1<22)&&(by2<22)&&(by3<22)&&(by4<22)){
-			
+
 			if((!((by1==by2-1)&&(bx1==bx2)))&&(!((by1==by3-1)&&(bx1==bx3)))&&(!((by1==by4-1)&&(bx1==bx4)))&&(block[by1+1][bx1]==1)){
 				return 0;
 			}
@@ -343,9 +343,9 @@ int moveblock(int direct){
 			}
 			if((!((by4==by1-1)&&(bx4==bx1)))&&(!((by4==by2-1)&&(bx4==bx2)))&&(!((by4==by3-1)&&(bx4==bx3)))&&(block[by4+1][bx4]==1)){
 				return 0;
-			}	
-			doty++;				
-				
+			}
+			doty++;
+
 			removeblock();
 			by1++;
 			by2++;
@@ -359,7 +359,7 @@ int moveblock(int direct){
 	}
 	if(direct==3){//
 		if((bx1<10)&&(bx2<10)&&(bx3<10)&&(bx4<10)){
-			
+
 			if((!((bx1==bx2-1)&&(by1==by2)))&&(!((bx1==bx3-1)&&(by1==by3)))&&(!((bx1==bx4-1)&&(by1==by4)))&&(block[by1][bx1+1]==1)){
 				return 0;
 			}
@@ -371,7 +371,7 @@ int moveblock(int direct){
 			}
 			if((!((bx4==bx1-1)&&(by4==by1)))&&(!((bx4==bx2-1)&&(by4==by2)))&&(!((bx4==bx3-1)&&(by4==by3)))&&(block[by4][bx4+1]==1)){
 				return 0;
-			}				
+			}
 			dotx++;
 			removeblock();
 			bx1++;
@@ -405,7 +405,7 @@ int spin(void){
 			dotx=8;
 		}
 	}
-		removeblock();	
+		removeblock();
 	if(shape=='I'){
 		if(shmod==1){
 			if((block[doty+1][dotx]==0)&&(block[doty+1][dotx+1]==0)&&(block[doty+1][dotx+2]==0)&&(block[doty+1][dotx+3]==0)){
@@ -563,7 +563,7 @@ int spin(void){
 				bx4=dotx+2;
 				createblock();
 				return 0;
-			}	
+			}
 		}
 		else if(shmod==4){
 			if(block[doty+2][dotx]==1){
@@ -585,7 +585,7 @@ int spin(void){
 				bx4=dotx+0;
 				createblock();
 				return 0;
-			}	
+			}
 			else{
 				doty=origindoty;
 				if(up==1){
@@ -629,7 +629,7 @@ int spin(void){
 				bx4=dotx+1;
 				createblock();
 				return 0;
-			}	
+			}
 			else{
 				doty=origindoty;
 				if(up==1){
@@ -649,7 +649,7 @@ int spin(void){
 				bx4=dotx+2;
 				createblock();
 				return 0;
-			}	
+			}
 		}
 		else if(shmod==4){
 			if(block[doty+2][dotx+1]==1){
@@ -671,7 +671,7 @@ int spin(void){
 				bx4=dotx+1;
 				createblock();
 				return 0;
-			}	
+			}
 			else{
 				doty=origindoty;
 				if(up==1){
@@ -693,7 +693,7 @@ int spin(void){
 				bx4=dotx+2;
 				createblock();
 				return 0;
-			}	
+			}
 		}
 		else if(shmod==2){
 			if(block[doty+2][dotx+1]==1){
@@ -715,7 +715,7 @@ int spin(void){
 				bx4=dotx+1;
 				createblock();
 				return 0;
-			}	
+			}
 			else{
 				doty=origindoty;
 				if(up==1){
@@ -743,7 +743,7 @@ int spin(void){
 				bx4=dotx+2;
 				createblock();
 				return 0;
-			}	
+			}
 			else{
 				doty=origindoty;
 				if(up==1){
@@ -771,7 +771,7 @@ int spin(void){
 				bx4=dotx+1;
 				createblock();
 				return 0;
-			}	
+			}
 			else{
 				doty=origindoty;
 				if(up==1){
@@ -793,7 +793,7 @@ int spin(void){
 				bx4=dotx+1;
 				createblock();
 				return 0;
-			}	
+			}
 		}
 		else if(shmod==2){
 			if(block[doty+2][dotx+2]==1){
@@ -815,7 +815,7 @@ int spin(void){
 				bx4=dotx+2;
 				createblock();
 				return 0;
-			}	
+			}
 			else{
 				doty=origindoty;
 				if(up==1){
@@ -843,7 +843,7 @@ int spin(void){
 				bx4=dotx+1;
 				createblock();
 				return 0;
-			}	
+			}
 			else{
 				doty=origindoty;
 				if(up==1){
@@ -871,7 +871,7 @@ int spin(void){
 				bx4=dotx+1;
 				createblock();
 				return 0;
-			}	
+			}
 			else{
 				doty=origindoty;
 				if(up==1){
@@ -977,7 +977,7 @@ int spin(void){
 				if(up==1){
 					ban--;
 				}
-			}	
+			}
 		}
 	}
 	createblock();
@@ -1199,7 +1199,7 @@ void shade(int bot){
 	sy4=0;
 	}
 	dotx=dokx;
-	doty=doky;					
+	doty=doky;
 	mvprintw(6,15+n,"s1 %2d %2d s2 %2d %2d s3 %2d %2d s4 %2d %2d dotx=%d doty=%d",sx1,sy1,sx2,sy2,sx3,sy3,sx4,sy4,dotx,doty);
 }
 void change(void){
@@ -1209,7 +1209,7 @@ void change(void){
 		return;
 	}
 	static char chshape='N';
-	char o;	
+	char o;
 	px1=bx1;
 	py1=by1;
 	px2=bx2;
@@ -1262,7 +1262,7 @@ void change(void){
 			mvprintw(9,3," @ ");
 			mvprintw(10,2," @@@  ");
 			break;
-	}			
+	}
 	changenum++;
 	return;
 }
@@ -1365,7 +1365,7 @@ void gameover(int b){
 	speed=40;
 	stopfalling=1;
 	getch();
-	getch();	
+	getch();
 	stopfalling=0;
 	reset(1);
 	mvprintw(8,1,"holding:");
@@ -1393,7 +1393,7 @@ int spinban(void){
 		shade(3);
 		shade(shadebot);
 		changenum=0;
-		mvprintw(7,4," ");	
+		mvprintw(7,4," ");
 		return 1;
 	}
 	return 0;
@@ -1406,7 +1406,7 @@ box(win,'|','-');
 mvwaddstr(win,1,8,"PAUSE");
 mvwaddstr(win,2,4,"Press enter to");
 mvwaddstr(win,3,6,"continue...");
-int i;	
+int i;
 int ch;
 	while(1){
 		mvprintw(7,15+n,"b1 %2d %2d b2 %2d %2d b3 %2d %2d b4 %2d %2d shmod=%d ban=%d",bx1,by1,bx2,by2,bx3,by3,bx4,by4,shmod,ban);
@@ -1473,13 +1473,13 @@ int ch;
 				case '\r':                    /* 判斷是否 ENTER 鍵被按下 */
 					stopfalling=1;
 						//signal(SIGALRM,SIG_IGN);
-						//signal(SIGHUP,down);			
+						//signal(SIGHUP,down);
 					touchwin(win);
 					wrefresh(win);
 					//	mvprintw(1,20,"here");
 					refresh();
 					int gh;
-					while(1){		
+					while(1){
 						gh=getchar();
 							if(gh=='\r'){
 								touchwin(stdscr);
@@ -1488,11 +1488,11 @@ int ch;
 							}
 							else if(gh==27){
 								endwin();            /* 判斷是否[ESC]鍵被按下 */
-								exit(1);
-							}		
+								exit(0);
+							}
 						}
 				break;
-				case 104:             
+				case 104:
 					stopfalling=abs(stopfalling-1);
 				break;
 				case 263:                     /* 判斷是否 BACKSPACE 鍵被按下 */
@@ -1516,13 +1516,13 @@ int ch;
 							shade(shadebot);
 							changenum=0;
 							mvprintw(7,4," ");
-							break;	
+							break;
 						}
 					}
 				break;
 				case 27: //ESC
 					endwin();
-					exit(1);
+					exit(0);
 				case 122:
 					change();
 				break;
@@ -1534,7 +1534,7 @@ int ch;
 			reset(1);
 			stopfalling=1;
 			return;
-		}			
+		}
 	}
 return;
 }
